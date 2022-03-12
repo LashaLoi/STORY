@@ -1,3 +1,3 @@
-const { startBot } = require('./src/core')
+import { startBot } from './src/core.js'
 
 startBot()

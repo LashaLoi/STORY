@@ -10,11 +10,13 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "axios": "^0.26.1",
     "node-telegram-bot-api": "^0.56.0",
     "nodemon": "^2.0.15"
   },
   "devDependencies": {
     "dotenv": "^16.0.0",
     "prettier": "^2.5.1"
-  }
+  },
+  "type": "module"
 }
