@@ -27,13 +27,12 @@ export const handleRequest = async (chatId) => {
     return axios.post(url, parseRequest(chat))
 }
 
-const greeting = async (chatId) => {
-    await bot.sendMessage(
+const greeting = (chatId) =>
+    bot.sendMessage(
         chatId,
         `<b>Привет!</b> 👋🏻\n\nМеня зовут <code>story-bot</code>, и мы с командой рады, что ты пришел(а) на наши открытые дискуссии <b>STORY</b>!\n\n${QUESTIONS[0]}`,
         { parse_mode: 'HTML' }
     )
-}
 
 const initChat = (chatId, { username, firstName, lastName }) => {
     state[chatId] = {
