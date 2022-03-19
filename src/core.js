@@ -1,49 +1,55 @@
 import TelegramBot from 'node-telegram-bot-api'
-import axios from 'axios'
 import dotenv from 'dotenv'
-import { parseRequest } from './utils.js'
-import { STEPS, QUESTIONS, OPTIONS, START_COMMAND } from './constants.js'
+import { QUESTIONS, OPTIONS, START_COMMAND } from './constants.js'
+import { handleRequest } from './api.js'
 
 dotenv.config()
 
-const url = process.env.API_URL
 const token = process.env.TG_TOKEN
 
 const bot = new TelegramBot(token, { polling: true })
 
 const state = {}
 
-export const handleRequest = async (chatId) => {
-    const chat = state[chatId]
-    const { username } = chat
+const sendQuestion = async ({ chatId, step }) => {
+    const option = OPTIONS[step]
 
-    const { data } = await axios.get(url)
-    const user = data.find((item) => item.username === `@${username}`)
-
-    if (user) {
-        return axios.put(`${url}/${user.id}`, parseRequest(chat))
-    }
-
-    return axios.post(url, parseRequest(chat))
+    return bot.sendMessage(
+        chatId,
+        QUESTIONS[step],
+        option
+            ? {
+                  reply_markup: {
+                      keyboard: option,
+                  },
+              }
+            : {
+                  reply_markup: {
+                      hide_keyboard: true,
+                  },
+              }
+    )
 }
 
-const greeting = (chatId) =>
-    bot.sendMessage(
+const greeting = async (chatId) => {
+    await bot.sendMessage(
         chatId,
-        `<b>Привет!</b> 👋🏻\n\nМеня зовут <code>story-bot</code>, и мы с командой рады, что ты пришел(а) на наши открытые дискуссии <b>STORY</b>!\n\n${QUESTIONS[0]}`,
-        { parse_mode: 'HTML' }
+        `<b>Привет!</b> 👋🏻\n\nМеня зовут <code>story-bot</code>, и мы с командой рады, что ты пришел(а) на наши открытые дискуссии <b>STORY</b>!\n`,
+        {
+            parse_mode: 'HTML',
+        }
     )
+
+    await sendQuestion({ chatId, step: 0 })
+}
 
 const initChat = (chatId, { username, firstName, lastName }) => {
     state[chatId] = {
         username,
         firstName,
         lastName,
-        1: '',
-        2: '',
-        3: '',
-        4: '',
-        step: STEPS[0],
+        step: 0,
+        pending: false,
     }
 }
 
@@ -54,33 +60,6 @@ const deleteChat = (chatId) => {
 const sendToCommonChannel = (info) =>
     bot.sendMessage(process.env.COMMOT_CHAT_ID, info)
 
-const handleStep = ({ chatId, text, step, nextStep }, cb) => {
-    state[chatId] = { ...state[chatId], [step]: text, step: nextStep }
-
-    return cb(chatId)
-}
-
-const sendSecondQuestion = (chatId) =>
-    bot.sendMessage(chatId, QUESTIONS[1], {
-        reply_markup: {
-            keyboard: OPTIONS[0],
-        },
-    })
-
-const sendThirdQuestion = (chatId) =>
-    bot.sendMessage(chatId, QUESTIONS[2], {
-        reply_markup: {
-            keyboard: OPTIONS[1],
-        },
-    })
-
-const sendForeQuestion = (chatId) =>
-    bot.sendMessage(chatId, QUESTIONS[3], {
-        reply_markup: {
-            hide_keyboard: true,
-        },
-    })
-
 const sendFinish = async (chatId) => {
     await bot.sendMessage(
         chatId,
@@ -89,14 +68,34 @@ const sendFinish = async (chatId) => {
     )
 
     const { username, firstName, lastName } = state[chatId]
+    const firstQuestion = state[chatId]['0']
+
+    if (OPTIONS[0][0].includes(firstQuestion)) {
+        const path =
+            firstQuestion === OPTIONS[0][0][0]
+                ? './assets/cat.mp4'
+                : './assets/dog.mp4'
+
+        await bot.sendVideo(chatId, path)
+    }
 
     await sendToCommonChannel(
         `@${username} - ${firstName} ${lastName} закончил(а) отпрос.`
     )
 
-    await handleRequest(chatId)
+    state[chatId] = { ...state[chatId], pending: true }
+
+    await handleRequest(chatId, state[chatId])
 
     deleteChat(chatId)
+}
+
+const handleNextStep = (currentStep, { chatId, text }) => {
+    state[chatId] = {
+        ...state[chatId],
+        [currentStep]: text,
+        step: currentStep + 1,
+    }
 }
 
 bot.on('message', (message) => {
@@ -107,33 +106,25 @@ bot.on('message', (message) => {
     }
 
     const currentStep = state[currentChatId]?.step ?? null
+    const isPending = state[currentChatId]?.pending
 
-    const data = {
-        chatId: currentChatId,
-        text: message.text,
+    if (isPending) {
+        return
     }
 
-    switch (currentStep) {
-        case STEPS[0]:
-            return handleStep(
-                { ...data, step: STEPS[0], nextStep: STEPS[1] },
-                sendSecondQuestion
-            )
-        case STEPS[1]:
-            return handleStep(
-                { ...data, step: STEPS[1], nextStep: STEPS[2] },
-                sendThirdQuestion
-            )
-        case STEPS[2]:
-            return handleStep(
-                { ...data, step: STEPS[2], nextStep: STEPS[3] },
-                sendForeQuestion
-            )
-        case STEPS[3]:
-            return handleStep(
-                { ...data, step: STEPS[3], nextStep: 'finish' },
-                sendFinish
-            )
+    if (currentStep !== null) {
+        const nextStep = currentStep + 1
+
+        if (nextStep === QUESTIONS.length) {
+            return sendFinish(currentChatId)
+        }
+
+        handleNextStep(currentStep, {
+            chatId: currentChatId,
+            text: message.text,
+        })
+
+        return sendQuestion({ chatId: currentChatId, step: nextStep })
     }
 
     return bot.sendMessage(
