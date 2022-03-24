@@ -63,8 +63,16 @@ const sendToCommonChannel = (info) =>
 const sendFinish = async (chatId) => {
     await bot.sendMessage(
         chatId,
-        'Спасибо за обратную связь! Нам важно <b>твое</b> мнение.\nС уважением команда <b>STORY</b> и покорный слуга <code>story-bot</code>.',
-        { parse_mode: 'HTML' }
+        'Спасибо за обратную связь! Нам важно <b>твое</b> мнение.\n\n' +
+            'Следи за нами в: <a href="https://instagram.com/story.baranovichi?utm_medium=copy_link">Intagram</a> и <a href="https://t.me/story1517">Telegram</a>\n\n' +
+            'С уважением команда <b>STORY</b> и покорный слуга <code>story-bot</code>.\n\n' +
+            'Обнимаем 🤗',
+        {
+            parse_mode: 'HTML',
+            reply_markup: {
+                hide_keyboard: true,
+            },
+        }
     )
 
     const { username, firstName, lastName } = state[chatId]
