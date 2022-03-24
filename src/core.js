@@ -124,6 +124,11 @@ bot.on('message', (message) => {
         const nextStep = currentStep + 1
 
         if (nextStep === QUESTIONS.length) {
+            handleNextStep(currentStep, {
+                chatId: currentChatId,
+                text: message.text,
+            })
+
             return sendFinish(currentChatId)
         }
 
