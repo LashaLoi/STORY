@@ -132,6 +132,25 @@ bot.on('message', (message) => {
             return sendFinish(currentChatId)
         }
 
+        if (currentStep === 4) {
+            if (message.text === OPTIONS[4][0][1]) {
+                handleNextStep(currentStep, {
+                    chatId: currentChatId,
+                    text: message.text,
+                })
+
+                handleNextStep(currentStep + 1, {
+                    chatId: currentChatId,
+                    text: '-',
+                })
+
+                return sendQuestion({
+                    chatId: currentChatId,
+                    step: nextStep + 1,
+                })
+            }
+        }
+
         handleNextStep(currentStep, {
             chatId: currentChatId,
             text: message.text,
