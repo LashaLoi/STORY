@@ -5,7 +5,7 @@ startBot()
 
 console.log(`Bot has been started!`)
 
-const server = http.createServer((req, res) => {
+const server = http.createServer((_req, res) => {
     res.end('Vercel server')
 })
 
