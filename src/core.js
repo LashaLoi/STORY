@@ -3,21 +3,19 @@ import { handleRequest, sendQuestion } from './api.js'
 
 import { bot } from './bot.js'
 
-const state = {}
+const stateMap = new Map()
 
 const initChat = (chatId, { username, firstName, lastName }) => {
-  state[chatId] = {
+  stateMap.set(chatId, {
     username,
     firstName,
     lastName,
     step: 0,
     pending: false,
-  }
+  })
 }
 
-const deleteChat = (chatId) => {
-  delete state[chatId]
-}
+const deleteChat = (chatId) => stateMap.delete(chatId)
 
 const sendFinish = async (chatId) => {
   await bot.sendMessage(
@@ -34,19 +32,22 @@ const sendFinish = async (chatId) => {
     }
   )
 
-  state[chatId] = { ...state[chatId], pending: true }
+  const prevState = stateMap.get(chatId)
+  stateMap.set(chatId, { ...prevState, pending: true })
 
-  await handleRequest(chatId, state[chatId])
+  await handleRequest(stateMap.get(chatId))
 
   deleteChat(chatId)
 }
 
 const handleNextStep = (currentStep, { chatId, text }) => {
-  state[chatId] = {
-    ...state[chatId],
+  const prevState = stateMap.get(chatId)
+
+  stateMap.set(chatId, {
+    ...prevState,
     [currentStep]: text,
     step: currentStep + 1,
-  }
+  })
 }
 
 bot.on('message', (message) => {
@@ -56,8 +57,10 @@ bot.on('message', (message) => {
     return
   }
 
-  const currentStep = state[currentChatId]?.step ?? null
-  const isPending = state[currentChatId]?.pending
+  const state = stateMap.get(currentChatId)
+
+  const currentStep = state?.step ?? null
+  const isPending = state?.pending
 
   if (isPending) {
     return

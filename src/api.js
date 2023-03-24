@@ -9,7 +9,7 @@ dotenv.config()
 
 const url = process.env.API_URL
 
-export const handleRequest = async (chatId, chat) => {
+export const handleRequest = async (chat) => {
   const { username } = chat
 
   const { data } = await axios.get(url)
