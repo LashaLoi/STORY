@@ -3,4 +3,4 @@ import dotenv from 'dotenv'
 
 dotenv.config()
 
-export const bot = new TelegramBot(process.env.TG_TOKEN, { polling: false })
+export const bot = new TelegramBot(process.env.TG_TOKEN, { polling: true })
