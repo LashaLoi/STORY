@@ -14,12 +14,13 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "axios": "^0.26.1",
+    "@supabase/supabase-js": "^2.12.1",
     "node-telegram-bot-api": "^0.56.0",
-    "nodemon": "^2.0.15"
+    "xstate": "^4.37.1"
   },
   "devDependencies": {
     "dotenv": "^16.0.0",
+    "nodemon": "^2.0.15",
     "prettier": "^2.5.1"
   },
   "type": "module",

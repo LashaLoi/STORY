@@ -1,37 +1,34 @@
 import dotenv from 'dotenv'
-import axios from 'axios'
 
-import { QUESTIONS, OPTIONS } from './constants.js'
-
-import { bot } from './bot.js'
+import { QUESTIONS } from './constants.js'
+import { supabase } from './config/supabase.js'
+import { bot } from './config/bot.js'
 
 dotenv.config()
 
-const url = process.env.API_URL
+export const sendData = async (data) => {
+  const dateNow = new Date()
+  const day = dateNow.getDay()
 
-export const handleRequest = async (chat) => {
-  const { username } = chat
+  if (day === 3 || day === 4) {
+    const tableNumber = day - 2
 
-  const { data } = await axios.get(url)
-  const user = data.find((item) => item.username === username)
-
-  if (user) {
-    return axios.put(`${url}/${user.id}`, chat)
+    return supabase.from(`day${tableNumber}`).insert(data)
   }
 
-  return axios.post(url, chat)
+  return supabase.from('daytest').insert(data)
 }
 
-export const sendQuestion = async ({ chatId, step }) => {
-  const option = OPTIONS[step]
+export const sendToBot = (chatId, field) => {
+  const { question, options } = QUESTIONS[field]
 
   return bot.sendMessage(
     chatId,
-    QUESTIONS[step],
-    option
+    question,
+    options
       ? {
           reply_markup: {
-            keyboard: option,
+            keyboard: options,
           },
         }
       : {
