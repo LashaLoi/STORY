@@ -3,10 +3,10 @@ FROM node:14
 WORKDIR /app
 
 COPY package*.json .
-COPY yarn.lock .
+COPY package-lock.json .
 
-RUN yarn
+RUN npm i
 
 COPY . .
 
-CMD ["yarn", "start"]
+CMD ["npm", "run", "start"]
